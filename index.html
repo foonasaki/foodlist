@@ -69,17 +69,17 @@
                 <td>${info.分類}</td>
                 <td>
                   <div style="display: flex; flex-direction: column; align-items: center;">
-                    <span>${name}</span>
+                    <span>${ (info.name !== null && info.name !== '') ? info.name : '-' }</span>
                      ${ info.画像ファイル名 ? `<img src="images/${info.画像ファイル名}" alt="${name}">` : '' }
                   </div>
                 </td>
-                <td>${info.価格}</td>
+                <td>${ (info.価格 !== null && info.価格 !== '') ? info.価格 : '-' }</td>
                 <td>${
                   Array.isArray(info.販売場所)
-                    ? info.販売場所.join('<br>')
-                    : info.販売場所
+                    ? (info.販売場所.length > 0 ? info.販売場所.join('<br>') : '-')
+                    : (info.販売場所 ? info.販売場所 : '-')
                 }</td>
-                <td>${info.備考}</td>
+                <td>${ (info.備考 !== null && info.備考 !== '') ? info.備考 : '-' }</td>
                 <td><a href="${info.URL}" target="_blank" rel="noopener noreferrer">${info.URL}</a></td>
               `;
               tbody.appendChild(row);
