@@ -94,7 +94,6 @@
               </div>
             </div>
           </th>
-          <!-- <th>備考</th> -->
           <th>リンク</th>
         </tr>
       </thead>
@@ -103,143 +102,139 @@
   </div>
 
   <script>
-  fetch('json/menu_data.json')
-    .then(response => response.json())
-    .then(data => {
-      const tbody = document.querySelector('#productTable tbody');
+    fetch('json/menu_data.json')
+      .then(response => response.json())
+      .then(data => {
+        const tbody = document.querySelector('#productTable tbody');
 
-      // ---------- 販売場所分解関数 ----------
-      function parseSalesPlace(str) {
-        const lastOpen = str.lastIndexOf('（');
-        const lastClose = str.lastIndexOf('）');
-        if (lastOpen === -1 || lastClose === -1 || lastClose < lastOpen) {
-          return { 名前: str.trim(), パーク: '', エリア: '' };
-        }
-        const namePart = str.substring(0, lastOpen);
-        const locationPart = str.substring(lastOpen + 1, lastClose);
-        const [park, area] = locationPart.split('/');
-        return {
-          名前: namePart.trim(),
-          パーク: park ? park.trim() : '',
-          エリア: area ? area.trim() : ''
-        };
-      }
-
-      // ---------- フィルター ----------
-      const filters = {
-        分類: [],
-        商品: '',
-        価格: '',
-        販売場所_名前: [],
-        販売場所_パーク: [],
-        販売場所_エリア: [],
-        備考: '',
-        URL: ''
-      };
-
-      const updateDropdownButton = (button, selectedArray) => {
-        button.textContent = selectedArray.length === 0 ? '選択' : selectedArray.join(', ');
-      };
-
-      // ---------- ドロップダウン作成 ----------
-      function createDropdown(dropdownDiv, button, values, filterKey) {
-        const uniqueValues = Array.from(new Set(values)).sort();
-        uniqueValues.forEach(val => {
-          const label = document.createElement('label');
-          label.innerHTML = `<input type="checkbox" value="${val}"> ${val}`;
-          dropdownDiv.appendChild(label);
-        });
-
-        dropdownDiv.addEventListener('change', () => {
-          filters[filterKey] = Array.from(dropdownDiv.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
-          updateDropdownButton(button, filters[filterKey]);
-          renderTable();
-        });
-
-        button.addEventListener('click', () => {
-          dropdownDiv.style.display = dropdownDiv.style.display === 'block' ? 'none' : 'block';
-        });
-      }
-
-      // ---------- テーブル描画 ----------
-      const renderTable = () => {
-        tbody.innerHTML = '';
-        for (const [name, info] of Object.entries(data)) {
-          const safeValue = val => (Array.isArray(val) ? (val.length ? val.join('<br>') : '-') : (val ?? '-'));
-          const categoryMatch = filters.分類.length === 0 || filters.分類.includes(info.分類);
-
-          const salesPlaceArray = Array.isArray(info.販売場所) ? info.販売場所 : (info.販売場所 ? [info.販売場所] : []);
-          const parsedPlaces = salesPlaceArray.map(parseSalesPlace);
-
-          const salesPlaceMatch =
-            (filters.販売場所_名前.length === 0 || parsedPlaces.some(p => filters.販売場所_名前.includes(p.名前))) &&
-            (filters.販売場所_パーク.length === 0 || parsedPlaces.some(p => filters.販売場所_パーク.includes(p.パーク))) &&
-            (filters.販売場所_エリア.length === 0 || parsedPlaces.some(p => filters.販売場所_エリア.includes(p.エリア)));
-
-          const match =
-            categoryMatch &&
-            (filters.商品 === '' || name.toLowerCase().includes(filters.商品)) &&
-            (filters.価格 === '' || String(info.価格 || '').toLowerCase().includes(filters.価格)) &&
-            salesPlaceMatch &&
-            (filters.備考 === '' || (info.備考 || '').toLowerCase().includes(filters.備考)) &&
-            (filters.URL === '' || (info.URL || '').toLowerCase().includes(filters.URL));
-
-          if (match) {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${safeValue(info.分類)}</td>
-              <td>
-                <div style="display: flex; flex-direction: column; align-items: center;">
-                  <span>${name}</span>
-                  ${ info.画像ファイル名 ? `<img src="images/${info.画像ファイル名}" alt="${name}">` : '' }
-                </div>
-              </td>
-              <td>${safeValue(info.価格)}</td>
-              <td>${parsedPlaces.map(p => p.パーク).join('<br>')}</td>
-              <td>${parsedPlaces.map(p => p.エリア).join('<br>')}</td>
-              <td>${parsedPlaces.map(p => p.名前).join('<br>')}</td>
-              <td>${ info.URL ? `<a href="${info.URL}" target="_blank" rel="noopener noreferrer">${info.URL}</a>` : '-' }</td>
-            `;
-            tbody.appendChild(row);
+        // ---------- 販売場所分解関数 ----------
+        function parseSalesPlace(str) {
+          const lastOpen = str.lastIndexOf('（');
+          const lastClose = str.lastIndexOf('）');
+          if (lastOpen === -1 || lastClose === -1 || lastClose < lastOpen) {
+            return {名前: str.trim(), パーク: '', エリア: '' };
           }
+          const namePart = str.substring(0, lastOpen);
+          const locationPart = str.substring(lastOpen + 1, lastClose);
+          const [park, area] = locationPart.split('/');
+          return {
+            名前: namePart.trim(),
+            パーク: park ? park.trim() : '',
+            エリア: area ? area.trim() : ''
+          };
         }
-      };
 
-      // ---------- ドロップダウン初期化 ----------
-      const parkDropdown = document.getElementById('parkDropdown');
-      const parkButton = document.getElementById('parkButton');
-      const areaDropdown = document.getElementById('areaDropdown');
-      const areaButton = document.getElementById('areaButton');
-      const nameDropdown = document.getElementById('nameDropdown');
-      const nameButton = document.getElementById('nameButton');
+        // ---------- フィルター ----------
+        const filters = {
+          分類: [],
+          商品: '',
+          価格: '',
+          販売場所_名前: [],
+          販売場所_パーク: [],
+          販売場所_エリア: [],
+        };
 
-      const allParsedPlaces = Object.values(data).flatMap(info => (Array.isArray(info.販売場所) ? info.販売場所 : (info.販売場所 ? [info.販売場所] : []))).map(parseSalesPlace);
+        const updateDropdownButton = (button, selectedArray) => {
+          button.textContent = selectedArray.length === 0 ? '選択' : selectedArray.join(', ');
+        };
 
-      createDropdown(parkDropdown, parkButton, allParsedPlaces.map(p => p.パーク), '販売場所_パーク');
-      createDropdown(areaDropdown, areaButton, allParsedPlaces.map(p => p.エリア), '販売場所_エリア');
-      createDropdown(nameDropdown, nameButton, allParsedPlaces.map(p => p.名前), '販売場所_名前');
+        // ---------- ドロップダウン作成 ----------
+        function createDropdown(dropdownDiv, button, values, filterKey) {
+          const uniqueValues = Array.from(new Set(values)).sort();
+          uniqueValues.forEach(val => {
+            const label = document.createElement('label');
+            label.innerHTML = `<input type="checkbox" value="${val}"> ${val}`;
+            dropdownDiv.appendChild(label);
+          });
 
-      // ---------- 他の検索欄 ----------
-      document.querySelectorAll('thead input').forEach(input => {
-        const column = input.getAttribute('data-column');
-        input.addEventListener('input', e => {
-          filters[column] = e.target.value.toLowerCase();
-          renderTable();
+          dropdownDiv.addEventListener('change', () => {
+            filters[filterKey] = Array.from(dropdownDiv.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+            updateDropdownButton(button, filters[filterKey]);
+            renderTable();
+          });
+
+          button.addEventListener('click', () => {
+            dropdownDiv.style.display = dropdownDiv.style.display === 'block' ? 'none' : 'block';
+          });
+        }
+
+        // ---------- テーブル描画 ----------
+        const renderTable = () => {
+          tbody.innerHTML = '';
+          for (const [name, info] of Object.entries(data)) {
+            const safeValue = val => (Array.isArray(val) ? (val.length ? val.join('<br>') : '-') : (val ?? '-'));
+            const categoryMatch = filters.分類.length === 0 || filters.分類.includes(info.分類);
+
+            const salesPlaceArray = Array.isArray(info.販売場所) ? info.販売場所 : (info.販売場所 ? [info.販売場所] : []);
+            const parsedPlaces = salesPlaceArray.map(parseSalesPlace);
+
+            const salesPlaceMatch =
+              (filters.販売場所_名前.length === 0 || parsedPlaces.some(p => filters.販売場所_名前.includes(p.名前))) &&
+              (filters.販売場所_パーク.length === 0 || parsedPlaces.some(p => filters.販売場所_パーク.includes(p.パーク))) &&
+              (filters.販売場所_エリア.length === 0 || parsedPlaces.some(p => filters.販売場所_エリア.includes(p.エリア)));
+
+            const productMatch = filters.商品 === '' || name.toLowerCase().includes(filters.商品);
+            const priceMatch = filters.価格 === '' || String(info.価格 || '').toLowerCase().includes(filters.価格);
+
+            if (categoryMatch && salesPlaceMatch && productMatch && priceMatch) {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td>${safeValue(info.分類)}</td>
+                <td>
+                  <div style="display: flex; flex-direction: column; align-items: center;">
+                    <span>${name}</span>
+                    ${ info.画像ファイル名 ? `<img src="images/${info.画像ファイル名}" alt="${name}">` : '' }
+                  </div>
+                </td>
+                <td>${safeValue(info.価格)}</td>
+                <td>${parsedPlaces.map(p => p.パーク).join('<br>')}</td>
+                <td>${parsedPlaces.map(p => p.エリア).join('<br>')}</td>
+                <td>${parsedPlaces.map(p => p.名前).join('<br>')}</td>
+                <td>${ info.URL ? `<a href="${info.URL}" target="_blank" rel="noopener noreferrer">${info.URL}</a>` : '-' }</td>
+              `;
+              tbody.appendChild(row);
+            }
+          }
+        };
+
+        // ---------- ドロップダウン初期化 ----------
+        const categoryDropdown = document.getElementById('categoryDropdown');
+        const categoryButton = document.getElementById('categoryButton');
+        const parkDropdown = document.getElementById('parkDropdown');
+        const parkButton = document.getElementById('parkButton');
+        const areaDropdown = document.getElementById('areaDropdown');
+        const areaButton = document.getElementById('areaButton');
+        const nameDropdown = document.getElementById('nameDropdown');
+        const nameButton = document.getElementById('nameButton');
+
+        createDropdown(categoryDropdown, categoryButton, Object.values(data).map(info => info.分類), '分類');
+
+        const allParsedPlaces = Object.values(data).flatMap(info => (Array.isArray(info.販売場所) ? info.販売場所 : (info.販売場所 ? [info.販売場所] : []))).map(parseSalesPlace);
+        createDropdown(parkDropdown, parkButton, allParsedPlaces.map(p => p.パーク), '販売場所_パーク');
+        createDropdown(areaDropdown, areaButton, allParsedPlaces.map(p => p.エリア), '販売場所_エリア');
+        createDropdown(nameDropdown, nameButton, allParsedPlaces.map(p => p.名前), '販売場所_名前');
+
+        // ---------- 他の検索欄 ----------
+        document.querySelectorAll('thead input').forEach(input => {
+          const column = input.getAttribute('data-column');
+          input.addEventListener('input', e => {
+            filters[column] = e.target.value.toLowerCase();
+            renderTable();
+          });
         });
-      });
 
-      // ---------- 初期表示 ----------
-      renderTable();
+        // ---------- 初期表示 ----------
+        renderTable();
 
-      // ---------- ドロップダウン外クリックで閉じる ----------
-      document.addEventListener('click', e => {
-        if (!parkDropdown.contains(e.target) && !parkButton.contains(e.target)) parkDropdown.style.display = 'none';
-        if (!areaDropdown.contains(e.target) && !areaButton.contains(e.target)) areaDropdown.style.display = 'none';
-        if (!nameDropdown.contains(e.target) && !nameButton.contains(e.target)) nameDropdown.style.display = 'none';
-      });
-    })
-    .catch(error => console.error('JSONの読み込みに失敗しました:', error));
-</script>
-
+        // ---------- ドロップダウン外クリックで閉じる ----------
+        document.addEventListener('click', e => {
+          if (!categoryDropdown.contains(e.target) && !categoryButton.contains(e.target)) categoryDropdown.style.display = 'none';
+          if (!parkDropdown.contains(e.target) && !parkButton.contains(e.target)) parkDropdown.style.display = 'none';
+          if (!areaDropdown.contains(e.target) && !areaButton.contains(e.target)) areaDropdown.style.display = 'none';
+          if (!nameDropdown.contains(e.target) && !nameButton.contains(e.target)) nameDropdown.style.display = 'none';
+        });
+      })
+      .catch(error => console.error('JSONの読み込みに失敗しました:', error));
+  </script>
 </body>
 </html>
