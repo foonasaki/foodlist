@@ -207,7 +207,7 @@
         const nameDropdown = document.getElementById('nameDropdown');
         const nameButton = document.getElementById('nameButton');
 
-        createDropdown(categoryDropdown, categoryButton, Object.values(data).map(info => info.分類), '分類');
+        createDropdown(categoryDropdown, categoryButton, Object.values(data).map(info => info.分類).filter(val => val !== null && val !== ''), '分類');
 
         const allParsedPlaces = Object.values(data).flatMap(info => (Array.isArray(info.販売場所) ? info.販売場所 : (info.販売場所 ? [info.販売場所] : []))).map(parseSalesPlace);
         createDropdown(parkDropdown, parkButton, allParsedPlaces.map(p => p.パーク), '販売場所_パーク');
