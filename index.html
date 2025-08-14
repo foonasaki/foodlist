@@ -24,10 +24,10 @@
         <tr>
           <th><input type="text" placeholder="分類で検索" data-column="分類"></th>
           <th><input type="text" placeholder="商品名で検索" data-column="商品"></th>
-          <!-- <th><input type="text" placeholder="価格で検索" data-column="価格"></th> -->
+          <th></th>
           <th><input type="text" placeholder="販売場所で検索" data-column="販売場所"></th>
-          <!-- <th><input type="text" placeholder="備考で検索" data-column="備考"></th> -->
-          <!-- <th><input type="text" placeholder="リンクで検索" data-column="URL"></th> -->
+          <th></th>
+          <th></th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -69,7 +69,7 @@
                 <td>${info.分類}</td>
                 <td>
                   <div style="display: flex; flex-direction: column; align-items: center;">
-                    <span>${ (info.name !== null && info.name !== '') ? info.name : '-' }</span>
+                    <span>${name}</span>
                      ${ info.画像ファイル名 ? `<img src="images/${info.画像ファイル名}" alt="${name}">` : '' }
                   </div>
                 </td>
