@@ -4,14 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>商品一覧</title>
-  <!-- 外部CSSファイルの読み込み -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <h2 style="text-align:center;">商品一覧</h2>
-  <input type="text" id="searchBox" placeholder="商品名で検索してください">
 
-  <!-- 横スクロール可能にするためのラッパ -->
   <div class="table-container">
     <table id="productTable">
       <thead>
@@ -20,8 +17,17 @@
           <th>商品</th>
           <th>価格</th>
           <th>販売場所</th>
-          <th>備考</th>        
+          <th>備考</th>
           <th>リンク</th>
+        </tr>
+        <!-- 検索用入力欄 -->
+        <tr>
+          <th><input type="text" placeholder="分類で検索" data-column="分類"></th>
+          <th><input type="text" placeholder="商品名で検索" data-column="商品"></th>
+          <th><input type="text" placeholder="価格で検索" data-column="価格"></th>
+          <th><input type="text" placeholder="販売場所で検索" data-column="販売場所"></th>
+          <th><input type="text" placeholder="備考で検索" data-column="備考"></th>
+          <th><input type="text" placeholder="リンクで検索" data-column="URL"></th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -33,12 +39,31 @@
       .then(response => response.json())
       .then(data => {
         const tbody = document.querySelector('#productTable tbody');
-        const searchBox = document.getElementById('searchBox');
+        const searchInputs = document.querySelectorAll('thead input');
 
-        const renderTable = (filter = '') => {
+        // 現在の検索条件を保持
+        const filters = {
+          分類: '',
+          商品: '',
+          価格: '',
+          販売場所: '',
+          備考: '',
+          URL: ''
+        };
+
+        const renderTable = () => {
           tbody.innerHTML = '';
           for (const [name, info] of Object.entries(data)) {
-            if (name.includes(filter)) {
+            // 各列ごとに一致チェック
+            const match =
+              (filters.分類 === '' || info.分類.toLowerCase().includes(filters.分類)) &&
+              (filters.商品 === '' || name.toLowerCase().includes(filters.商品)) &&
+              (filters.価格 === '' || String(info.価格).toLowerCase().includes(filters.価格)) &&
+              (filters.販売場所 === '' || info.販売場所.toLowerCase().includes(filters.販売場所)) &&
+              (filters.備考 === '' || info.備考.toLowerCase().includes(filters.備考)) &&
+              (filters.URL === '' || info.URL.toLowerCase().includes(filters.URL));
+
+            if (match) {
               const row = document.createElement('tr');
               row.innerHTML = `
                 <td>${info.分類}</td>
@@ -58,11 +83,17 @@
           }
         };
 
-        renderTable();
-
-        searchBox.addEventListener('input', (event) => {
-          renderTable(event.target.value);
+        // 各入力欄にイベントを設定
+        searchInputs.forEach(input => {
+          input.addEventListener('input', e => {
+            const column = e.target.getAttribute('data-column');
+            filters[column] = e.target.value.toLowerCase();
+            renderTable();
+          });
         });
+
+        // 初期表示
+        renderTable();
       })
       .catch(error => {
         console.error('JSONの読み込みに失敗しました:', error);
