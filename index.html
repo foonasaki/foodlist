@@ -74,7 +74,11 @@
                   </div>
                 </td>
                 <td>${info.価格}</td>
-                <td>${info.販売場所}</td>
+                <td>${
+                  Array.isArray(info.販売場所)
+                    ? info.販売場所.join('<br>')
+                    : info.販売場所
+                }</td>
                 <td>${info.備考}</td>
                 <td><a href="${info.URL}" target="_blank" rel="noopener noreferrer">${info.URL}</a></td>
               `;
