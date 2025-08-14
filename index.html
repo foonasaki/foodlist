@@ -70,7 +70,7 @@
                 <td>
                   <div style="display: flex; flex-direction: column; align-items: center;">
                     <span>${name}</span>
-                    <img src="images/${info.画像ファイル名}" alt="${name}">
+                     ${ info.画像ファイル名 ? `<img src="images/${info.画像ファイル名}" alt="${name}">` : '' }
                   </div>
                 </td>
                 <td>${info.価格}</td>
