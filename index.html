@@ -69,10 +69,28 @@
           <th>価格</th>
           <th>
             <div style="display: flex; flex-direction: column; align-items: center;">
-              <span>販売場所</span>
+              <span>パーク</span>
               <div class="dropdown-container">
-                <button id="salesPlaceButton" class="dropdown-button">選択</button>
-                <div id="salesPlaceDropdown" class="checkbox-dropdown"></div>
+                <button id="parkButton" class="dropdown-button">選択</button>
+                <div id="parkDropdown" class="checkbox-dropdown"></div>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <span>エリア</span>
+              <div class="dropdown-container">
+                <button id="areaButton" class="dropdown-button">選択</button>
+                <div id="areaDropdown" class="checkbox-dropdown"></div>
+              </div>
+            </div>
+          </th>
+          <th>
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <span>店名</span>
+              <div class="dropdown-container">
+                <button id="nameButton" class="dropdown-button">選択</button>
+                <div id="nameDropdown" class="checkbox-dropdown"></div>
               </div>
             </div>
           </th>
@@ -85,133 +103,143 @@
   </div>
 
   <script>
-    fetch('json/menu_data.json')
-      .then(response => response.json())
-      .then(data => {
-        const tbody = document.querySelector('#productTable tbody');
+  fetch('json/menu_data.json')
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.querySelector('#productTable tbody');
 
-        // ---------- 分類 ----------
-        const categoryDropdown = document.getElementById('categoryDropdown');
-        const categoryButton = document.getElementById('categoryButton');
-        const categories = new Set();
-        Object.values(data).forEach(info => {
-          if (info.分類) categories.add(info.分類);
-        });
-        Array.from(categories).sort().forEach(cat => {
-          const label = document.createElement('label');
-          label.innerHTML = `<input type="checkbox" value="${cat}"> ${cat}`;
-          categoryDropdown.appendChild(label);
-        });
-
-        // ---------- 販売場所 ----------
-        const salesPlaceDropdown = document.getElementById('salesPlaceDropdown');
-        const salesPlaceButton = document.getElementById('salesPlaceButton');
-        const salesPlaces = new Set();
-        Object.values(data).forEach(info => {
-          if (Array.isArray(info.販売場所)) info.販売場所.forEach(p => salesPlaces.add(p));
-          else if (info.販売場所) salesPlaces.add(info.販売場所);
-        });
-        Array.from(salesPlaces).sort().forEach(place => {
-          const label = document.createElement('label');
-          label.innerHTML = `<input type="checkbox" value="${place}"> ${place}`;
-          salesPlaceDropdown.appendChild(label);
-        });
-
-        // ---------- フィルター ----------
-        const filters = {
-          分類: [],
-          商品: '',
-          価格: '',
-          販売場所: [],
-          備考: '',
-          URL: ''
+      // ---------- 販売場所分解関数 ----------
+      function parseSalesPlace(str) {
+        const lastOpen = str.lastIndexOf('（');
+        const lastClose = str.lastIndexOf('）');
+        if (lastOpen === -1 || lastClose === -1 || lastClose < lastOpen) {
+          return { 名前: str.trim(), パーク: '', エリア: '' };
+        }
+        const namePart = str.substring(0, lastOpen);
+        const locationPart = str.substring(lastOpen + 1, lastClose);
+        const [park, area] = locationPart.split('/');
+        return {
+          名前: namePart.trim(),
+          パーク: park ? park.trim() : '',
+          エリア: area ? area.trim() : ''
         };
+      }
 
-        const updateDropdownButton = (button, selectedArray) => {
-          button.textContent = selectedArray.length === 0 ? '選択' : selectedArray.join(', ');
-        };
+      // ---------- フィルター ----------
+      const filters = {
+        分類: [],
+        商品: '',
+        価格: '',
+        販売場所_名前: [],
+        販売場所_パーク: [],
+        販売場所_エリア: [],
+        備考: '',
+        URL: ''
+      };
 
-        const renderTable = () => {
-          tbody.innerHTML = '';
-          for (const [name, info] of Object.entries(data)) {
-            const safeValue = val => {
-              if (Array.isArray(val)) return val.length > 0 ? val.join('<br>') : '-';
-              return (val !== null && val !== undefined && val !== '') ? val : '-';
-            };
+      const updateDropdownButton = (button, selectedArray) => {
+        button.textContent = selectedArray.length === 0 ? '選択' : selectedArray.join(', ');
+      };
 
-            const categoryMatch = filters.分類.length === 0 || filters.分類.includes(info.分類);
-            const salesPlaceArray = Array.isArray(info.販売場所) ? info.販売場所 : (info.販売場所 ? [info.販売場所] : []);
-            const salesPlaceMatch = filters.販売場所.length === 0 || filters.販売場所.some(f => salesPlaceArray.includes(f));
+      // ---------- ドロップダウン作成 ----------
+      function createDropdown(dropdownDiv, button, values, filterKey) {
+        const uniqueValues = Array.from(new Set(values)).sort();
+        uniqueValues.forEach(val => {
+          const label = document.createElement('label');
+          label.innerHTML = `<input type="checkbox" value="${val}"> ${val}`;
+          dropdownDiv.appendChild(label);
+        });
 
-            const match =
-              categoryMatch &&
-              (filters.商品 === '' || name.toLowerCase().includes(filters.商品)) &&
-              (filters.価格 === '' || String(info.価格 || '').toLowerCase().includes(filters.価格)) &&
-              salesPlaceMatch &&
-              (filters.備考 === '' || (info.備考 || '').toLowerCase().includes(filters.備考)) &&
-              (filters.URL === '' || (info.URL || '').toLowerCase().includes(filters.URL));
+        dropdownDiv.addEventListener('change', () => {
+          filters[filterKey] = Array.from(dropdownDiv.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+          updateDropdownButton(button, filters[filterKey]);
+          renderTable();
+        });
 
-            if (match) {
-              const row = document.createElement('tr');
-              row.innerHTML = `
-                <td>${safeValue(info.分類)}</td>
-                <td>
-                  <div style="display: flex; flex-direction: column; align-items: center;">
-                    <span>${name}</span>
-                    ${ info.画像ファイル名 ? `<img src="images/${info.画像ファイル名}" alt="${name}">` : '' }
-                  </div>
-                </td>
-                <td>${safeValue(info.価格)}</td>
-                <td>${safeValue(info.販売場所)}</td>
-                <td>${ info.URL ? `<a href="${info.URL}" target="_blank" rel="noopener noreferrer">${info.URL}</a>` : '-' }</td>
-              `;
-              tbody.appendChild(row);
-            }
+        button.addEventListener('click', () => {
+          dropdownDiv.style.display = dropdownDiv.style.display === 'block' ? 'none' : 'block';
+        });
+      }
+
+      // ---------- テーブル描画 ----------
+      const renderTable = () => {
+        tbody.innerHTML = '';
+        for (const [name, info] of Object.entries(data)) {
+          const safeValue = val => (Array.isArray(val) ? (val.length ? val.join('<br>') : '-') : (val ?? '-'));
+          const categoryMatch = filters.分類.length === 0 || filters.分類.includes(info.分類);
+
+          const salesPlaceArray = Array.isArray(info.販売場所) ? info.販売場所 : (info.販売場所 ? [info.販売場所] : []);
+          const parsedPlaces = salesPlaceArray.map(parseSalesPlace);
+
+          const salesPlaceMatch =
+            (filters.販売場所_名前.length === 0 || parsedPlaces.some(p => filters.販売場所_名前.includes(p.名前))) &&
+            (filters.販売場所_パーク.length === 0 || parsedPlaces.some(p => filters.販売場所_パーク.includes(p.パーク))) &&
+            (filters.販売場所_エリア.length === 0 || parsedPlaces.some(p => filters.販売場所_エリア.includes(p.エリア)));
+
+          const match =
+            categoryMatch &&
+            (filters.商品 === '' || name.toLowerCase().includes(filters.商品)) &&
+            (filters.価格 === '' || String(info.価格 || '').toLowerCase().includes(filters.価格)) &&
+            salesPlaceMatch &&
+            (filters.備考 === '' || (info.備考 || '').toLowerCase().includes(filters.備考)) &&
+            (filters.URL === '' || (info.URL || '').toLowerCase().includes(filters.URL));
+
+          if (match) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${safeValue(info.分類)}</td>
+              <td>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                  <span>${name}</span>
+                  ${ info.画像ファイル名 ? `<img src="images/${info.画像ファイル名}" alt="${name}">` : '' }
+                </div>
+              </td>
+              <td>${safeValue(info.価格)}</td>
+              <td>${parsedPlaces.map(p => p.パーク).join('<br>')}</td>
+              <td>${parsedPlaces.map(p => p.エリア).join('<br>')}</td>
+              <td>${parsedPlaces.map(p => p.名前).join('<br>')}</td>
+              <td>${ info.URL ? `<a href="${info.URL}" target="_blank" rel="noopener noreferrer">${info.URL}</a>` : '-' }</td>
+            `;
+            tbody.appendChild(row);
           }
-        };
+        }
+      };
 
-        // ---------- イベント設定 ----------
-        // ボタンでドロップダウン表示/非表示
-        categoryButton.addEventListener('click', () => {
-          categoryDropdown.style.display = categoryDropdown.style.display === 'block' ? 'none' : 'block';
-        });
-        salesPlaceButton.addEventListener('click', () => {
-          salesPlaceDropdown.style.display = salesPlaceDropdown.style.display === 'block' ? 'none' : 'block';
-        });
+      // ---------- ドロップダウン初期化 ----------
+      const parkDropdown = document.getElementById('parkDropdown');
+      const parkButton = document.getElementById('parkButton');
+      const areaDropdown = document.getElementById('areaDropdown');
+      const areaButton = document.getElementById('areaButton');
+      const nameDropdown = document.getElementById('nameDropdown');
+      const nameButton = document.getElementById('nameButton');
 
-        // チェックボックス変更時
-        categoryDropdown.addEventListener('change', () => {
-          filters.分類 = Array.from(categoryDropdown.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
-          updateDropdownButton(categoryButton, filters.分類);
+      const allParsedPlaces = Object.values(data).flatMap(info => (Array.isArray(info.販売場所) ? info.販売場所 : (info.販売場所 ? [info.販売場所] : []))).map(parseSalesPlace);
+
+      createDropdown(parkDropdown, parkButton, allParsedPlaces.map(p => p.パーク), '販売場所_パーク');
+      createDropdown(areaDropdown, areaButton, allParsedPlaces.map(p => p.エリア), '販売場所_エリア');
+      createDropdown(nameDropdown, nameButton, allParsedPlaces.map(p => p.名前), '販売場所_名前');
+
+      // ---------- 他の検索欄 ----------
+      document.querySelectorAll('thead input').forEach(input => {
+        const column = input.getAttribute('data-column');
+        input.addEventListener('input', e => {
+          filters[column] = e.target.value.toLowerCase();
           renderTable();
         });
-        salesPlaceDropdown.addEventListener('change', () => {
-          filters.販売場所 = Array.from(salesPlaceDropdown.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
-          updateDropdownButton(salesPlaceButton, filters.販売場所);
-          renderTable();
-        });
+      });
 
-        // 他の検索欄
-        document.querySelectorAll('thead input').forEach(input => {
-          const column = input.getAttribute('data-column');
-          input.addEventListener('input', e => {
-            filters[column] = e.target.value.toLowerCase();
-            renderTable();
-          });
-        });
+      // ---------- 初期表示 ----------
+      renderTable();
 
-        // ドロップダウン外クリックで閉じる
-        document.addEventListener('click', e => {
-          if (!categoryDropdown.contains(e.target) && !categoryButton.contains(e.target)) categoryDropdown.style.display = 'none';
-          if (!salesPlaceDropdown.contains(e.target) && !salesPlaceButton.contains(e.target)) salesPlaceDropdown.style.display = 'none';
-        });
+      // ---------- ドロップダウン外クリックで閉じる ----------
+      document.addEventListener('click', e => {
+        if (!parkDropdown.contains(e.target) && !parkButton.contains(e.target)) parkDropdown.style.display = 'none';
+        if (!areaDropdown.contains(e.target) && !areaButton.contains(e.target)) areaDropdown.style.display = 'none';
+        if (!nameDropdown.contains(e.target) && !nameButton.contains(e.target)) nameDropdown.style.display = 'none';
+      });
+    })
+    .catch(error => console.error('JSONの読み込みに失敗しました:', error));
+</script>
 
-        // 初期表示
-        renderTable();
-        updateDropdownButton(categoryButton, filters.分類);
-        updateDropdownButton(salesPlaceButton, filters.販売場所);
-      })
-      .catch(error => console.error('JSONの読み込みに失敗しました:', error));
-  </script>
 </body>
 </html>
