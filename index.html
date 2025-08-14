@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>商品一覧</title>
+  <style>
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      font-family: Arial, sans-serif;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    img {
+      max-width: 100px;
+      height: auto;
+    }
+    #searchBox {
+      display: block;
+      margin: 20px auto;
+      width: 60%;
+      padding: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">商品一覧</h2>
+  <input type="text" id="searchBox" placeholder="商品名で検索してください">
+  <table id="productTable">
+    <thead>
+      <tr>
+        <th>分類</th>
+        <th>商品</th>
+        <th>価格</th>
+        <th>販売場所</th>
+        <th>備考</th>        
+        <th>リンク</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    fetch('json/menu_data.json')
+      .then(response => response.json())
+      .then(data => {
+        const tbody = document.querySelector('#productTable tbody');
+        const searchBox = document.getElementById('searchBox');
+
+        // 初期データをテーブルに表示
+        const renderTable = (filter = '') => {
+          tbody.innerHTML = ''; // テーブルをクリア
+          for (const [name, info] of Object.entries(data)) {
+            if (name.includes(filter)) { // フィルタリング
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td>${info.分類}</td>
+                <td>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                <span>${name}</span>
+                <img src="images/${info.画像ファイル名}" alt="${name}">
+                </div>
+                </td>
+                <td>${info.価格}</td>
+                <td>${info.販売場所}</td>
+                <td>${info.備考}</td>
+                <td><a href="${info.URL}" target="_blank" rel="noopener noreferrer">${info.URL}</a></td>
+              `;
+              tbody.appendChild(row);
+            }
+          }
+        };
+
+        // 初期表示
+        renderTable();
+
+        // 検索ボックスの入力イベント
+        searchBox.addEventListener('input', (event) => {
+          const filter = event.target.value;
+          renderTable(filter);
+        });
+      })
+      .catch(error => {
+        console.error('JSONの読み込みに失敗しました:', error);
+      });
+  </script>
+</body>
+</html>
