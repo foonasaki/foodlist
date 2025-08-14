@@ -76,7 +76,7 @@
               </div>
             </div>
           </th>
-          <th>備考</th>
+          <!-- <th>備考</th> -->
           <th>リンク</th>
         </tr>
       </thead>
@@ -163,7 +163,6 @@
                 </td>
                 <td>${safeValue(info.価格)}</td>
                 <td>${safeValue(info.販売場所)}</td>
-                <td>${safeValue(info.備考)}</td>
                 <td>${ info.URL ? `<a href="${info.URL}" target="_blank" rel="noopener noreferrer">${info.URL}</a>` : '-' }</td>
               `;
               tbody.appendChild(row);
