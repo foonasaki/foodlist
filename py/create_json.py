@@ -18,8 +18,7 @@ os.makedirs(json_dir, exist_ok=True)
 # JSONデータ保存用の辞書
 menu_data = {}
 
-# for n in range(0, 5001):
-for n in range(1468, 1470):
+for n in range(0, 5001):
     url = f"https://www.tokyodisneyresort.jp/food/{n}/"
     try:
         response = requests.get(url, headers=headers, timeout=20)

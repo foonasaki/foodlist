@@ -1,0 +1,57 @@
+/* 全体共通スタイル */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* 検索ボックス */
+#searchBox {
+  display: block;
+  margin: 20px auto;
+  width: 60%;
+  padding: 10px;
+  font-size: 16px;
+}
+
+/* テーブル */
+.table-container {
+  overflow-x: auto; /* 横スクロール許可（スマホ用） */
+}
+
+table {
+  width: 100%;
+  margin: 20px auto;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 12px;
+  text-align: center;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+/* 画像 */
+img {
+  max-width: 100px;
+  height: auto;
+}
+
+/* スマホ向け調整 */
+@media (max-width: 600px) {
+  #searchBox {
+    width: 90%;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 8px;
+    font-size: 14px;
+  }
+  img {
+    max-width: 70px;
+  }
+}
